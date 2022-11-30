@@ -3,10 +3,11 @@ const dotenv = require('dotenv')
 const morgan = require('morgan')
 const exphbs = require('express-handlebars')
 const connectDB = require('./config/db')
+const path = require('path')
 
 //Load config
 
-dotenv.config({ path: '.config/config.env'})
+dotenv.config({ path: './config/config.env'})
 
 connectDB();
 
@@ -18,11 +19,25 @@ if(process.env.NODE_ENV === 'development'){
 }
 
 // Handlebars
-app.engine('.hbs' , exphbs({extname: '.hbs'}))
+app.engine(
+    '.hbs',
+    exphbs.engine({
+        defaultLayout: 'main',
+        extname: '.hbs',
+    }),
+)
 app.set('view engine', '.hbs');
+
+
+//Static folder
+app.use(express.static(path.join(__dirname,'public')))
+
+//Routes
+app.use('/', require('./routes/index') )
 
 const PORT = process.env.PORT || 5000
 
 app.listen(
     PORT,
-    console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`))
+    console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`)
+    )
