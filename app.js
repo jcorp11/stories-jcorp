@@ -2,10 +2,12 @@ const express = require('express')
 const dotenv = require('dotenv')
 const morgan = require('morgan')
 const exphbs = require('express-handlebars')
-const connectDB = require('./config/db')
 const path = require('path')
+const mongoose = require('mongoose')
 const passport = require('passport')
 const session = require('express-session')
+const MongoStore = require('connect-mongo')
+const connectDB = require('./config/db')
 
 
 //Load config
@@ -19,16 +21,27 @@ connectDB();
 
 const app = express()
 
+//Body parser
+app.use(express.urlencoded({ extended: false }))
+app.use(express.json())
+
 //Logging
 if(process.env.NODE_ENV === 'development'){
     app.use(morgan('dev'))
 }
 
+//handlebars helpers
+const { formatDate } = require('./helpers/hbs')
+
+
 // Handlebars
 app.engine(
     '.hbs',
     exphbs.engine({
-        defaultLayout: 'main',
+        helpers:{
+            formatDate,
+        },
+        defaultLayout: 'main', //por eso va a main
         extname: '.hbs',
     }),
 )
@@ -39,6 +52,7 @@ app.use(session({
     secret: 'keyboard cat',
     resave: false,
     saveUninitialized: false,
+    store: MongoStore.create({mongoUrl: process.env.MONGO_URI,}),
 
 }))
 
@@ -53,6 +67,7 @@ app.use(express.static(path.join(__dirname,'public')))
 //Routes
 app.use('/', require('./routes/index') )
 app.use('/auth', require('./routes/auth') )
+app.use('/stories', require('./routes/stories') )
 
 const PORT = process.env.PORT || 3000
 
